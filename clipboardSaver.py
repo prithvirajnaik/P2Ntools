@@ -77,43 +77,7 @@ def toggle_monitor():
         threading.Thread(target=monitor_clipboard, daemon=True).start()
 
 
-# Load available log files
-# def load_file_list():
-#     for widget in file_list_frame.winfo_children():
-#         widget.destroy()
 
-#     files = [f for f in os.listdir(save_folder) if f.endswith(".txt")]
-    
-#     # file_list_button_frame.hoverCo
-#     for file in files:
-#         file_list_button_frame = ctk.CTkFrame(file_list_frame)
-#         file_list_button_frame.pack(pady=5, padx=20,fill = "x")
-#         file_list_button_frame.bind("<Button-1>", lambda event, f=file: open_file(f))
-#         def on_hover(event):
-#             file_list_button_frame.configure(fg_color="gray")
-
-#         def on_leave(event):
-#             file_list_button_frame.configure(fg_color="black")  # Reset color
-
-#         file_list_button_frame.bind("<Enter>", on_hover)  # Change color when mouse enters
-#         file_list_button_frame.bind("<Leave>", on_leave)  # Reset color when mouse leaves
-
-#         file_button = ctk.CTkLabel(
-#             file_list_button_frame, text=file, 
-#             anchor="w"
-#         )
-#         file_button.bind("<Button-1>", lambda event, f=file: open_file(f)) 
-#         delete_file_button  = ctk.CTkButton(
-#             file_list_button_frame, text = "❌",
-#             command=lambda f=file: delFile(f),
-#             fg_color="#333333", hover_color="#555555",
-#             corner_radius=10, width=20, height=40,
-            
-#         )
-#         file_button.grid( row = 0,column=0,sticky = "we",padx=(15,5),pady=10)
-#         delete_file_button.grid(row = 0,column = 1, padx=(5,15),pady=10)
-#         file_list_button_frame.columnconfigure(0, weight= 1)
-#         file_list_button_frame.columnconfigure(1, weight= 0)
 
 def load_file_list():
     for widget in file_list_frame.winfo_children():
