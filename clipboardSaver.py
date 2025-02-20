@@ -220,7 +220,7 @@ new_button.pack(side="right", padx=15 , pady=5)
 # --- Editor Screen ---  
 editor_frame = ctk.CTkFrame(app)
 
-log_label = ctk.CTkLabel(editor_frame, text="No file selected", font=("Arial", 14))
+log_label = ctk.CTkLabel(editor_frame, text="No file selected", font=("Arial", 14))   
 log_label.pack(pady=5)
 
 editor = tk.Text(editor_frame, wrap="word", height=14,font=("Arial", 18))
