@@ -78,7 +78,7 @@ def toggle_monitor():
 
 
 
-
+ 
 def load_file_list():
     for widget in file_list_frame.winfo_children():
         widget.destroy()
@@ -153,6 +153,9 @@ def save_file():
 
 # Create a new file
 def create_new_file():
+    app.after(0, _create_new_file) #to make below fucntion run on the main thread
+
+def _create_new_file():
     global current_file
     filename = simpledialog.askstring("New File", "Enter file name (without extension):")
     if not filename:
@@ -164,25 +167,6 @@ def create_new_file():
 
     load_file_list()
 
-# Delete a selected file
-def delete_file():
-    selected_files = os.listdir(save_folder)
-    if not selected_files:
-        messagebox.showwarning("No Files", "There are no files to delete.")
-        return
-    
-    filename = simpledialog.askstring("Delete File", "Enter file name to delete (without extension):")
-    if not filename:
-        return
-
-    file_path = os.path.join(save_folder, f"{filename}.txt")
-
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        load_file_list()
-        messagebox.showinfo("File Deleted", f"'{filename}.txt' has been deleted.")
-    else:
-        messagebox.showerror("Error", "File not found.")
 
 # Switch to file editor view
 def switch_to_editor():
@@ -199,6 +183,8 @@ def go_back():
 
 # Register global hotkey
 keyboard.add_hotkey("shift+alt+c", toggle_monitor)
+keyboard.add_hotkey("shift+alt+n", create_new_file)
+
 
 # GUI Setup
 ctk.set_appearance_mode("dark")
@@ -207,28 +193,31 @@ ctk.set_default_color_theme("blue")
 app = ctk.CTk()
 app.title("Clipboard Saver")
 app.geometry("600x500")
+# --- Navigation Bar ---
+nav_frame = ctk.CTkFrame(app, fg_color="#333333", height=50,corner_radius=0)
+nav_frame.pack(fill="x", side="top")
+
 
 # --- Home Screen ---
-home_frame = ctk.CTkFrame(app)
+home_frame = ctk.CTkFrame(app,corner_radius=0)
 home_frame.pack(fill="both", expand=True)
 
-title_label = ctk.CTkLabel(home_frame, text="Clipboard Saver", font=("Arial", 18, "bold"))
-title_label.pack(pady=10)
 
-button_frame = ctk.CTkFrame(home_frame)
-button_frame.pack(pady=5)
+title_label = ctk.CTkLabel(nav_frame, text="📋 Clipboard Saver", font=("Arial", 18, "bold"))
+title_label.pack(side="left", padx=15, pady=5)
+
+# button_frame = ctk.CTkFrame(nav_frame)
+# button_frame.pack(side="right", padx=15, pady=5)
 
 file_list_frame = ctk.CTkFrame(home_frame)
 file_list_frame.pack(fill="both", expand=True, padx=25, pady=25)
 
 
-new_button = ctk.CTkButton(button_frame, text="New File", command=create_new_file)
-new_button.grid(row=0, column=0, padx=5)
+new_button = ctk.CTkButton(nav_frame, text="➕", command=create_new_file,width=50)
+new_button.pack(side="right", padx=15 , pady=5)
 
-delete_button = ctk.CTkButton(button_frame, text="Delete File", command=delete_file)
-delete_button.grid(row=0, column=1, padx=5)
 
-# --- Editor Screen ---
+# --- Editor Screen ---  
 editor_frame = ctk.CTkFrame(app)
 
 log_label = ctk.CTkLabel(editor_frame, text="No file selected", font=("Arial", 14))
@@ -251,3 +240,4 @@ load_file_list()
 
 # Run App
 app.mainloop()
+
