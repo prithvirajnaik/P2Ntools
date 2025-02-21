@@ -13,6 +13,9 @@ running = False
 last_clipboard = ""
 monitoring_started = False
 current_file = None
+prev_width = 0  
+prev_columns = 0  
+resize_job = None  # Store reference to pending resize job
 
 # Setup logs folder
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -121,7 +124,7 @@ def load_file_list():
 
         # 🔹 **Create a card with dynamic width**
         card = ctk.CTkFrame(file_list_frame, fg_color="#212121", corner_radius=10)
-        card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+        card.grid(row=row, column=col, padx=20, pady=10, sticky="nsew")
 
         # 🔹 **Header Frame (File Name + Delete Button)**
         header_frame = ctk.CTkFrame(card, fg_color="transparent")
@@ -130,16 +133,14 @@ def load_file_list():
         file_label = ctk.CTkLabel(header_frame, text=file, font=("Arial", 14, "bold"), anchor="w")
         file_label.pack(side="left", padx=5)
 
-        delete_button = ctk.CTkButton(header_frame, text="❌", width=30, height=30,fg_color="transparent",
-                                      command=lambda f=file: delFile(f))
+        delete_button = ctk.CTkButton(header_frame, text="❌", width=30, height=30,
+                                      fg_color="transparent",command=lambda f=file: delete_file(f))
         delete_button.pack(side="right", padx=5)
 
         # **Preview Text**
         preview_label = ctk.CTkLabel(card, text=preview_content, font=("Arial", 12), wraplength=calculated_width - 20, justify="left")
         preview_label.pack(side = "left" , pady=5, padx=15)
 
-        # **Ensure Card Fills Grid Properly**
-        card.configure(width=calculated_width, height=150)
 
         # Open file when clicking the card
         card.bind("<Button-1>", lambda event, f=file: open_file(f))
@@ -151,13 +152,8 @@ def load_file_list():
         file_list_frame.columnconfigure(i, weight=1)
 
 
-prev_width = 0  
-prev_columns = 0  
-resize_job = None  # Store reference to pending resize job
 
-prev_width = 0  
-prev_columns = 0  
-resize_job = None  
+
 
 def on_resize(event):
     global prev_width, prev_columns, resize_job
@@ -186,7 +182,7 @@ def on_resize(event):
 
 
 
-def delFile(filename):
+def delete_file(filename):
     file_path = os.path.join(save_folder, filename)
     os.remove(file_path)
     load_file_list()
@@ -233,14 +229,20 @@ def _create_new_file():
 
 # Switch to file editor view
 def switch_to_editor():
+    nav_frame.pack_forget()
     home_frame.pack_forget()
     editor_frame.pack(fill="both", expand=True)
 
 # Go back to home screen
 def go_back():
-    global current_file
+    global running , monitoring_started ,current_file
     current_file = None
+    if running:
+        running = False
+        monitoring_started = False
+        start_button.configure(text="Start Monitoring", fg_color="green")
     editor_frame.pack_forget()
+    nav_frame.pack(fill="x", side="top")
     home_frame.pack(fill="both", expand=True)
     load_file_list()
 
@@ -274,8 +276,7 @@ home_frame.pack(fill="both", expand=True)
 title_label = ctk.CTkLabel(nav_frame, text="📋 Clipboard Saver", font=("Arial", 18, "bold"))
 title_label.pack(side="left", padx=15, pady=5)
 
-# button_frame = ctk.CTkFrame(nav_frame)
-# button_frame.pack(side="right", padx=15, pady=5)
+
 
 file_list_frame = ctk.CTkFrame(home_frame)
 file_list_frame.pack(fill="both", expand=True, padx=25, pady=25)
@@ -285,23 +286,29 @@ new_button = ctk.CTkButton(nav_frame, text="➕",fg_color="transparent", command
 new_button.pack(side="right", padx=15 , pady=5)
 
 
-# --- Editor Screen ---  
 editor_frame = ctk.CTkFrame(app)
 
-log_label = ctk.CTkLabel(editor_frame, text="No file selected", font=("Arial", 14))   
-log_label.pack(pady=5)
+# Header frame for file name + buttons
+editor_header = ctk.CTkFrame(editor_frame, fg_color="transparent")
+editor_header.pack(fill="x", padx=10, pady=5, anchor="w")
 
-editor = tk.Text(editor_frame, wrap="word", height=14,font=("Arial", 18))
-editor.pack(padx=10, pady=5, fill="both", expand=True)
+log_label = ctk.CTkLabel(editor_header, text="No file selected", font=("Arial", 14))
+log_label.pack(side="left", padx=5)
 
-save_button = ctk.CTkButton(editor_frame, text="Save File", command=save_file)
-save_button.pack(pady=5)
+# Buttons aligned to the right of the file name
+save_button = ctk.CTkButton(editor_header, text="💾 Save", width=80, command=save_file)
+save_button.pack(side="right", padx=5)
 
-start_button = ctk.CTkButton(editor_frame, text="Start Monitoring", command=toggle_monitor, fg_color="green")
-start_button.pack(pady=5)
+start_button = ctk.CTkButton(editor_header, text="▶ Start", width=100, command=toggle_monitor, fg_color="green")
+start_button.pack(side="right", padx=5)
 
-back_button = ctk.CTkButton(editor_frame, text="Go Back", command=go_back)
-back_button.pack(pady=5)  
+back_button = ctk.CTkButton(editor_header, text="⬅ Back", width=80, command=go_back)
+back_button.pack(side="right", padx=5)
+
+# Text Editor
+editor = tk.Text(editor_frame, wrap="word", height=14, font=("Arial", 18))
+editor.pack(padx=20, pady=20, fill="both", expand=True)
+
 
 # Load files on startup
 load_file_list()
