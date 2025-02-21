@@ -31,30 +31,6 @@ def show_notification(text):
     )
 
 
-# def monitor_clipboard():
-#     global running, last_clipboard, monitoring_started, current_file
-#     while running and current_file:
-#         clipboard_content = pyperclip.paste()
-
-#         if clipboard_content is None:  # Fix: Handle NoneType
-#             clipboard_content = ""
-                   
-
-
-#         if monitoring_started and clipboard_content and clipboard_content != last_clipboard:
-#             last_clipboard = clipboard_content
-#             with open(current_file, "w", encoding="utf-8") as f: #save any manually made changes to text while monitoring was on
-#                 f.write(editor.get("1.0", tk.END).strip())
-#             with open(current_file, "a", encoding="utf-8") as f:
-#                 f.write(clipboard_content + "\n")
-
-#             show_notification(clipboard_content)
-
-#             # Update the text editor with new content
-#             app.after(100, update_editor)
-
-#         time.sleep(1)
-
 def monitor_clipboard():
     global running, last_clipboard, monitoring_started, current_file
 
