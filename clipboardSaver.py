@@ -31,26 +31,58 @@ def show_notification(text):
     )
 
 
+# def monitor_clipboard():
+#     global running, last_clipboard, monitoring_started, current_file
+#     while running and current_file:
+#         clipboard_content = pyperclip.paste()
+
+#         if clipboard_content is None:  # Fix: Handle NoneType
+#             clipboard_content = ""
+                   
+
+
+#         if monitoring_started and clipboard_content and clipboard_content != last_clipboard:
+#             last_clipboard = clipboard_content
+#             with open(current_file, "w", encoding="utf-8") as f: #save any manually made changes to text while monitoring was on
+#                 f.write(editor.get("1.0", tk.END).strip())
+#             with open(current_file, "a", encoding="utf-8") as f:
+#                 f.write(clipboard_content + "\n")
+
+#             show_notification(clipboard_content)
+
+#             # Update the text editor with new content
+#             app.after(100, update_editor)
+
+#         time.sleep(1)
+
 def monitor_clipboard():
     global running, last_clipboard, monitoring_started, current_file
-    while running and current_file:
-        clipboard_content = pyperclip.paste()
 
-        if clipboard_content is None:  # Fix: Handle NoneType
-            clipboard_content = ""
+    while running and current_file:
+        clipboard_content = pyperclip.paste() or ""  # Ensure it's always a string
 
         if monitoring_started and clipboard_content and clipboard_content != last_clipboard:
             last_clipboard = clipboard_content
-            with open(current_file, "a", encoding="utf-8") as f:
-                f.write(clipboard_content + "\n")
+
+            # Check if the file still exists before writing
+            if not os.path.exists(current_file):
+                running = False
+                monitoring_started = False
+                app.after(0, lambda: messagebox.showerror("Error", "Selected file was deleted. Monitoring stopped."))
+                return
+
+            existing_content = editor.get("1.0", tk.END).strip()  # Read editor content
+            
+            # Open file in write mode and save both manual edits & clipboard data
+            with open(current_file, "w", encoding="utf-8") as f:
+                f.write(existing_content + "\n" + clipboard_content + "\n")
 
             show_notification(clipboard_content)
 
             # Update the text editor with new content
             app.after(100, update_editor)
 
-        time.sleep(1)
-
+        time.sleep(1)  # Delay to prevent high CPU usage
 
 
 def update_editor():
@@ -290,7 +322,7 @@ editor_frame = ctk.CTkFrame(app)
 
 # Header frame for file name + buttons
 editor_header = ctk.CTkFrame(editor_frame, fg_color="transparent")
-editor_header.pack(fill="x", padx=10, pady=5, anchor="w")
+editor_header.pack(fill="x", padx=10, pady=15, anchor="w")
 
 log_label = ctk.CTkLabel(editor_header, text="No file selected", font=("Arial", 14))
 log_label.pack(side="left", padx=5)
@@ -306,10 +338,12 @@ back_button = ctk.CTkButton(editor_header, text="⬅ Back", width=80, command=go
 back_button.pack(side="right", padx=5)
 
 # Text Editor
-editor = tk.Text(editor_frame, wrap="word", height=14, font=("Arial", 18))
+editor = tk.Text(editor_frame, wrap="word", height=14,font=("Arial", 18))
 editor.pack(padx=20, pady=20, fill="both", expand=True)
 
-
+# Add inner padding
+# editor.tag_configure("margin", lmargin1=20, lmargin2=20, rmargin=20)
+# editor.insert("1.0", "", "margin")  # Apply margin to all text
 # Load files on startup
 load_file_list()
 
