@@ -27,17 +27,20 @@ def show_notification(text):
         timeout=2
     )
 
-# Clipboard monitoring function
+
 def monitor_clipboard():
     global running, last_clipboard, monitoring_started, current_file
     while running and current_file:
         clipboard_content = pyperclip.paste()
-        
+
+        if clipboard_content is None:  # Fix: Handle NoneType
+            clipboard_content = ""
+
         if monitoring_started and clipboard_content and clipboard_content != last_clipboard:
             last_clipboard = clipboard_content
             with open(current_file, "a", encoding="utf-8") as f:
                 f.write(clipboard_content + "\n")
-            
+
             show_notification(clipboard_content)
 
             # Update the text editor with new content
@@ -45,18 +48,21 @@ def monitor_clipboard():
 
         time.sleep(1)
 
-# Function to update editor with latest file content
+
+
 def update_editor():
-    if current_file:
+    if current_file and os.path.exists(current_file):
         with open(current_file, "r", encoding="utf-8") as f:
             editor.delete("1.0", tk.END)
             editor.insert("1.0", f.read())
+    else:
+        editor.delete("1.0", tk.END)  # Clear editor if file doesn't exist
 
 
 
 def toggle_monitor():
     global running, monitoring_started
-    
+
     if not current_file:
         messagebox.showwarning("No File Selected", "Please open a file before starting monitoring.")
         return
@@ -67,62 +73,119 @@ def toggle_monitor():
 
     if running:
         running = False
+        monitoring_started = False
         start_button.configure(text="Start Monitoring", fg_color="green")
     else:
-        running = True
-        monitoring_started = True
-        pyperclip.copy("")  # Clear clipboard
-        start_button.configure(text="Stop Monitoring", fg_color="red")
-        
-        threading.Thread(target=monitor_clipboard, daemon=True).start()
-
+        if not monitoring_started:  # Only start a new thread if it's not already running
+            running = True
+            monitoring_started = True
+            pyperclip.copy("")  # Clear clipboard
+            start_button.configure(text="Stop Monitoring", fg_color="red")
+            
+            monitor_thread = threading.Thread(target=monitor_clipboard, daemon=True)
+            monitor_thread.start()
 
 
  
 def load_file_list():
+    # Clear existing widgets
     for widget in file_list_frame.winfo_children():
         widget.destroy()
 
     files = [f for f in os.listdir(save_folder) if f.endswith(".txt")]
 
-    for file in files:
-        # Create a frame for each file entry
-        file_list_button_frame = ctk.CTkFrame(file_list_frame, fg_color="#212121", corner_radius=10)
-        file_list_button_frame.pack(pady=5, padx=20, fill="x")
+    if not files:
+        no_files_label = ctk.CTkLabel(file_list_frame, text="No saved files yet.", font=("Arial", 16))
+        no_files_label.pack(pady=10)
+        return
 
-        # Function to handle hover effect
-        file_list_button_frame.bind("<Enter>", lambda event, frame=file_list_button_frame: frame.configure(fg_color="#555555"))
-        file_list_button_frame.bind("<Leave>", lambda event, frame=file_list_button_frame: frame.configure(fg_color="#212121"))
+    # 🛠 **Dynamic Card Width Settings**
+    window_width = app.winfo_width()
+    min_width = 200   # Minimum width of the card
+    max_width = 300   # Maximum width of the card
+    calculated_width = max(min_width, min(max_width, window_width // 3))  # Dynamic width
 
-        # Function to open file when clicked
-        file_list_button_frame.bind("<Button-1>", lambda event, f=file: open_file(f))
+    num_columns = 2 if window_width < 700 else 3# Adjust column count
 
-        # File name label (acts as a button)
-        file_button = ctk.CTkLabel(
-            file_list_button_frame, text=file,
-            anchor="w"
-        )
-        file_button.bind("<Button-1>", lambda event, f=file: open_file(f)) 
-        file_button.bind("<Enter>", lambda event, frame=file_list_button_frame: frame.configure(fg_color="#555555"))
-        file_button.bind("<Leave>", lambda event, frame=file_list_button_frame: frame.configure(fg_color="#212121"))
+    for index, file in enumerate(files):
+        row, col = divmod(index, num_columns)
 
-        # Delete button
-        delete_file_button = ctk.CTkButton(
-            file_list_button_frame, text="❌",
-            command=lambda f=file: delFile(f),
-            fg_color="#FF2129", hover_color="#800005",
-            corner_radius=10, width=30, height=30
-        )
+        file_path = os.path.join(save_folder, file)
 
-        # Grid layout
-        file_button.grid(row=0, column=0, sticky="we", padx=(15, 5), pady=10)
-        delete_file_button.grid(row=0, column=1, padx=(5, 15), pady=10)
+        # Read file preview (first 3 lines)
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                preview_content = "\n".join(f.readlines()[:3])
+        except:
+            preview_content = "Error loading file."
 
-        # Column configuration
-        file_list_button_frame.columnconfigure(0, weight=1)  # File name takes most space
-        file_list_button_frame.columnconfigure(1, weight=0)  # Delete button stays fixed
+        # 🔹 **Create a card with dynamic width**
+        card = ctk.CTkFrame(file_list_frame, fg_color="#212121", corner_radius=10)
+        card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
-#
+        # 🔹 **Header Frame (File Name + Delete Button)**
+        header_frame = ctk.CTkFrame(card, fg_color="transparent")
+        header_frame.pack(fill="x", padx=5, pady=5)
+
+        file_label = ctk.CTkLabel(header_frame, text=file, font=("Arial", 14, "bold"), anchor="w")
+        file_label.pack(side="left", padx=5)
+
+        delete_button = ctk.CTkButton(header_frame, text="❌", width=30, height=30,fg_color="transparent",
+                                      command=lambda f=file: delFile(f))
+        delete_button.pack(side="right", padx=5)
+
+        # **Preview Text**
+        preview_label = ctk.CTkLabel(card, text=preview_content, font=("Arial", 12), wraplength=calculated_width - 20, justify="left")
+        preview_label.pack(side = "left" , pady=5, padx=15)
+
+        # **Ensure Card Fills Grid Properly**
+        card.configure(width=calculated_width, height=150)
+
+        # Open file when clicking the card
+        card.bind("<Button-1>", lambda event, f=file: open_file(f))
+        file_label.bind("<Button-1>", lambda event, f=file: open_file(f))
+        preview_label.bind("<Button-1>", lambda event, f=file: open_file(f))
+
+    # Make the grid responsive
+    for i in range(num_columns):
+        file_list_frame.columnconfigure(i, weight=1)
+
+
+prev_width = 0  
+prev_columns = 0  
+resize_job = None  # Store reference to pending resize job
+
+prev_width = 0  
+prev_columns = 0  
+resize_job = None  
+
+def on_resize(event):
+    global prev_width, prev_columns, resize_job
+
+    current_width = app.winfo_width()
+
+    # Determine the number of columns based on window width
+    num_columns = 2 if current_width < 700 else 3  
+
+    # Only reload if:
+    # - The number of columns actually changes
+    # - The width has changed significantly (150px or more)
+    if  num_columns == prev_columns:
+        return  # Skip unnecessary reloads
+
+    # Update previous values
+    prev_width = current_width
+    prev_columns = num_columns  
+
+    # Cancel any pending reload
+    if resize_job:
+        app.after_cancel(resize_job)
+
+    # Delay reload to prevent excessive calls while resizing
+    resize_job = app.after(0, load_file_list)  # Debounce delay increased to 500ms
+
+
+
 def delFile(filename):
     file_path = os.path.join(save_folder, filename)
     os.remove(file_path)
@@ -191,8 +254,13 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 app = ctk.CTk()
+# Bind window resize event
+app.bind("<Configure>", on_resize)
+
 app.title("Clipboard Saver")
-app.geometry("600x500")
+app.geometry("700x500")
+app.minsize(500, 500)  # Set minimum width to 500px and height to 500px
+
 # --- Navigation Bar ---
 nav_frame = ctk.CTkFrame(app, fg_color="#333333", height=50,corner_radius=0)
 nav_frame.pack(fill="x", side="top")
@@ -213,7 +281,7 @@ file_list_frame = ctk.CTkFrame(home_frame)
 file_list_frame.pack(fill="both", expand=True, padx=25, pady=25)
 
 
-new_button = ctk.CTkButton(nav_frame, text="➕", command=create_new_file,width=50)
+new_button = ctk.CTkButton(nav_frame, text="➕",fg_color="transparent", command=create_new_file,width=50)
 new_button.pack(side="right", padx=15 , pady=5)
 
 
@@ -238,6 +306,6 @@ back_button.pack(pady=5)
 # Load files on startup
 load_file_list()
 
+
 # Run App
 app.mainloop()
-
