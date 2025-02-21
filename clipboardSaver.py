@@ -141,7 +141,7 @@ def load_file_list():
         file_label = ctk.CTkLabel(header_frame, text=file, font=("Arial", 14, "bold"), anchor="w")
         file_label.pack(side="left", padx=5)
 
-        delete_button = ctk.CTkButton(header_frame, text="❌", width=30, height=30,
+        delete_button = ctk.CTkButton(header_frame, text="❌", width=30, height=30,hover_color="red",
                                       fg_color="transparent",command=lambda f=file: delete_file(f))
         delete_button.pack(side="right", padx=5)
 
@@ -210,13 +210,14 @@ def open_file(filename):
 # Save the edited file
 def save_file():
     if not current_file:
-        messagebox.showwarning("No File Selected", "Please open a file first.")
+        # messagebox.showwarning("No File Selected", "Please open a file first.")
+        show_custom_message("No File Selected", "Please open a file first.", "#ff9900")    
         return
     
     with open(current_file, "w", encoding="utf-8") as f:
         f.write(editor.get("1.0", tk.END).strip())
 
-    messagebox.showinfo("File Saved", "Changes have been saved.")
+    show_custom_message("File Saved", "Changes have been saved.", "#44bb44")
 
 # Create a new file
 def create_new_file():
@@ -224,7 +225,9 @@ def create_new_file():
 
 def _create_new_file():
     global current_file
-    filename = simpledialog.askstring("New File", "Enter file name (without extension):")
+    # filename = simpledialog.askstring("New File", "Enter file name (without extension):")
+    dialog = ctk.CTkInputDialog(text="Enter file name (without extension):", title="Create New File")
+    filename = dialog.get_input()
     if not filename:
         return
     
@@ -253,6 +256,22 @@ def go_back():
     nav_frame.pack(fill="x", side="top")
     home_frame.pack(fill="both", expand=True)
     load_file_list()
+
+def show_custom_message(title, message, color="#ff4444"):
+    popup = ctk.CTkToplevel(app)
+    popup.title(title)
+    popup.geometry("400x200")
+    popup.resizable(False, False)
+    
+    popup_label = ctk.CTkLabel(popup, text=message, font=("Arial", 14), wraplength=350)
+    popup_label.pack(pady=20, padx=20)
+    
+    ok_button = ctk.CTkButton(popup, text="OK", fg_color=color, command=popup.destroy)
+    ok_button.pack(pady=10)
+
+    popup.grab_set()  # Makes the dialog modal
+    popup.mainloop()
+
 
 # Register global hotkey
 keyboard.add_hotkey("shift+alt+c", toggle_monitor)
@@ -317,9 +336,7 @@ back_button.pack(side="right", padx=5)
 editor = tk.Text(editor_frame, wrap="word", height=14,font=("Arial", 18))
 editor.pack(padx=20, pady=20, fill="both", expand=True)
 
-# Add inner padding
-# editor.tag_configure("margin", lmargin1=20, lmargin2=20, rmargin=20)
-# editor.insert("1.0", "", "margin")  # Apply margin to all text
+
 # Load files on startup
 load_file_list()
 
