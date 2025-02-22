@@ -86,16 +86,25 @@ def toggle_monitor():
         running = False
         monitoring_started = False
         start_button.configure(text="Start Monitoring", fg_color="green")
+        notification.notify(
+            title ="Clipboard saver",
+            message = "monitoring stopped",
+            timeout = 1
+        )
     else:
         if not monitoring_started:  # Only start a new thread if it's not already running
             running = True
             monitoring_started = True
             pyperclip.copy("")  # Clear clipboard
             start_button.configure(text="Stop Monitoring", fg_color="red")
+            notification.notify(
+                title ="Clipboard saver",
+                message = "monitoring started",
+                timeout = 1
+            )
             
             monitor_thread = threading.Thread(target=monitor_clipboard, daemon=True)
             monitor_thread.start()
-
 
  
 def load_file_list():
