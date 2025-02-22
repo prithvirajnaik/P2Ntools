@@ -4,9 +4,9 @@ import threading
 import os
 import time
 import keyboard
-from plyer import notification
 import tkinter as tk
-from tkinter import simpledialog, messagebox
+from tkinter import messagebox
+from clip_notifications import show_copied_notification,show_toggle_notification
 
 # Global Variables
 running = False
@@ -22,13 +22,6 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 save_folder = os.path.join(script_dir, "logs")
 os.makedirs(save_folder, exist_ok=True)
 
-# Show Windows notification
-def show_notification(text):
-    notification.notify(
-        title="Clipboard Saved!",
-        message=f"Copied: {text[:50]}...",  # Show first 50 characters
-        timeout=2
-    )
 
 
 def monitor_clipboard():
@@ -53,7 +46,7 @@ def monitor_clipboard():
             with open(current_file, "w", encoding="utf-8") as f:
                 f.write(existing_content + "\n" + clipboard_content + "\n")
 
-            show_notification(clipboard_content)
+            show_copied_notification(clipboard_content)
 
             # Update the text editor with new content
             app.after(100, update_editor)
@@ -86,22 +79,14 @@ def toggle_monitor():
         running = False
         monitoring_started = False
         start_button.configure(text="Start Monitoring", fg_color="green")
-        notification.notify(
-            title ="Clipboard saver",
-            message = "monitoring stopped",
-            timeout = 1
-        )
+        show_toggle_notification("monitoring stopped")
     else:
         if not monitoring_started:  # Only start a new thread if it's not already running
             running = True
             monitoring_started = True
             pyperclip.copy("")  # Clear clipboard
             start_button.configure(text="Stop Monitoring", fg_color="red")
-            notification.notify(
-                title ="Clipboard saver",
-                message = "monitoring started",
-                timeout = 1
-            )
+            show_toggle_notification("monitoring started")
             
             monitor_thread = threading.Thread(target=monitor_clipboard, daemon=True)
             monitor_thread.start()
