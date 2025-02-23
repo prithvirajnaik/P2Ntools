@@ -22,5 +22,5 @@ pip install -r requirements.txt
  ```
 ### **3. Run Script**
 ```sh
-python clipboardSaver.py
+python main.py
 ```
