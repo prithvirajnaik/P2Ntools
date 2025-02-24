@@ -2,8 +2,6 @@ import pyperclip
 import os
 import time
 import threading
-
-
 from tkinter import messagebox
 from clip_notifications import show_copied_notification,show_toggle_notification
 from utils import *

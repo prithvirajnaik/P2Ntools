@@ -19,10 +19,7 @@ def show_custom_message(app, title, message, color="#ff4444"):
     popup.mainloop()
 
 def on_resize(event):
-   
-
     current_width = app.winfo_width()
-
     # Determine the number of columns based on window width
     num_columns = 2 if current_width < 700 else 3  
 
@@ -43,5 +40,8 @@ def on_resize(event):
     # Delay reload to prevent excessive calls while resizing
     setting.resize_job = app.after(0, load_file_list)  # Debounce delay increased to 500ms
 
-
 app.bind("<Configure>", on_resize)
+
+def exit_program():
+    print("Exiting program")
+    app.quit()
