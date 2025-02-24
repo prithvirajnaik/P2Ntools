@@ -1,8 +1,8 @@
 import os
-
 from frames import *
 from setup_config import save_folder
 import setting 
+
 def load_file_list():
     # Clear existing widgets
     for widget in file_list_frame.winfo_children():
@@ -17,11 +17,11 @@ def load_file_list():
 
     # 🛠 **Dynamic Card Width Settings**
     window_width = app.winfo_width()
-    min_width = 200   # Minimum width of the card
-    max_width = 300   # Maximum width of the card
+    min_width = 300   # Minimum width of the card
+    max_width = 400   # Maximum width of the card
     calculated_width = max(min_width, min(max_width, window_width // 3))  # Dynamic width
 
-    num_columns = 2 if window_width < 700 else 3# Adjust column count
+    num_columns = 2 if window_width < 1000 else 3# Adjust column count
 
     for index, file in enumerate(files):
         row, col = divmod(index, num_columns)
@@ -106,6 +106,7 @@ def _create_new_file():
 
     load_file_list()
 
+# Buttons of Home screen
 
 new_button = ctk.CTkButton(nav_frame, text="➕",fg_color="transparent", command=create_new_file,width=50)
 new_button.pack(side="right", padx=15 , pady=5)

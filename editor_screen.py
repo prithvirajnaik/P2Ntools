@@ -100,6 +100,8 @@ def go_back():
     load_file_list()
 
 
+
+# Buttons of Editor screen
 save_button = ctk.CTkButton(editor_header, text="💾 Save", width=80, command=save_file)
 save_button.pack(side="right", padx=5)
 

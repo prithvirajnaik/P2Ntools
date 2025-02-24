@@ -20,9 +20,10 @@ def show_custom_message(app, title, message, color="#ff4444"):
 
 def on_resize(event):
     current_width = app.winfo_width()
+    # print(current_width)
     # Determine the number of columns based on window width
-    num_columns = 2 if current_width < 700 else 3  
-
+    num_columns = 2 if current_width < 1000 else 3  
+    # print(num_columns)
     # Only reload if:
     # - The number of columns actually changes
     # - The width has changed significantly (150px or more)
